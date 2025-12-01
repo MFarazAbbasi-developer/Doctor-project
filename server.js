@@ -23,7 +23,7 @@ app.use(express.json());
 app.use(cookieParser());
 // app.use(cors()); 
 app.use(cors({
-  origin: "http://localhost:3000", // Next.js
+  origin: process.env.CLIENT_URL, // Next.js
   credentials: true
 }));
 
