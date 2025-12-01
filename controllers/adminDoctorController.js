@@ -242,12 +242,21 @@ if (consultationFee?.amount) {
     }
 
     // --- Profile image ---
+    // if (req.file) {
+    //   if (doctor.profileImage) {
+    //     const oldPath = path.join(process.cwd(), "uploads", "doctors", path.basename(doctor.profileImage));
+    //     if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    //   }
+    //   doctor.profileImage = `/uploads/doctors/${req.file.filename}`;
+    // }
+    // --- Profile image (Cloudinary) ---
     if (req.file) {
-      if (doctor.profileImage) {
-        const oldPath = path.join(process.cwd(), "uploads", "doctors", path.basename(doctor.profileImage));
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      // Delete old image from Cloudinary if exists
+      if (doctor.profileImagePublicId) {
+        await cloudinary.uploader.destroy(doctor.profileImagePublicId);
       }
-      doctor.profileImage = `/uploads/doctors/${req.file.filename}`;
+      doctor.profileImage = req.file.path; // Cloudinary URL
+      doctor.profileImagePublicId = req.file.filename; // Cloudinary public_id
     }
 
     // --- Password ---

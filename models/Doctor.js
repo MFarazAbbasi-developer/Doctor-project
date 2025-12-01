@@ -42,6 +42,8 @@ const doctorSchema = new mongoose.Schema(
     },
 
     profileImage: { type: String, default: null },
+    profileImagePublicId: { type: String },
+
     isBlocked: { type: Boolean, default: false },
 
     // Professional Info

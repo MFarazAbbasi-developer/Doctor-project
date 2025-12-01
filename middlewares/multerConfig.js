@@ -1,34 +1,27 @@
 import multer from "multer";
-import path from "path";
-import fs from "fs";
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 
-// Dynamic storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    // You will send something like req.uploadPath = "users" or "doctors"
-    const folder = req.uploadPath || "users"; // fallback to users
+// --- Cloudinary setup ---
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-    const uploadDir = path.join(process.cwd(), "uploads", folder);
-
-    // Create folder if not exists
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    cb(null, uploadDir);
-  },
-
-  filename: function (req, file, cb) {
-    const uniqueSuffix =
-      Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+const cloudStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "DoctorProject", // optional folder in Cloudinary
+    allowed_formats: ["jpg", "jpeg", "png"],
   },
 });
 
-// Only image files allowed
+// --- File filter ---
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith("image/")) cb(null, true);
   else cb(new Error("Only image files are allowed"), false);
 };
 
-export const upload = multer({ storage, fileFilter });
+// --- Export multer instance ---
+export const upload = multer({ storage: cloudStorage, fileFilter });

@@ -22,6 +22,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    profileImagePublicId: { type: String },
+
 
     gender: {
       type: String,

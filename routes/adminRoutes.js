@@ -2,7 +2,6 @@ import express from "express";
 import { protectAdmin } from "../middlewares/authMiddleware.js";
 import {
   addUserByAdmin,
-  deleteUser,
   getAdminDashboardStats,
   getAllUsers,
   getSingleUser,
@@ -10,7 +9,7 @@ import {
   updateUserByAdmin,
 } from "../controllers/adminController.js";
 import { upload } from "../middlewares/multerConfig.js";
-import { getAllDoctors, toggleBlockDoctor, deleteDoctor, updateDoctorByAdmin, getSingleDoctor, addDoctorByAdmin } from "../controllers/adminDoctorController.js";
+import { getAllDoctors, toggleBlockDoctor, updateDoctorByAdmin, getSingleDoctor, addDoctorByAdmin } from "../controllers/adminDoctorController.js";
 
 const adminRouter = express.Router();
 
