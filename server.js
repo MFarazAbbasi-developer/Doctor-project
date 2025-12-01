@@ -24,7 +24,7 @@ app.use(cookieParser());
 // app.use(cors()); 
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://doctor-project-frontend-zfia-r2v6pb4lf.vercel.app/find-doctors?sort=mostExperienced"
+  "https://doctor-project-frontend-zfia-r2v6pb4lf.vercel.app"
 ];
 
 app.use(cors({
@@ -32,11 +32,12 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS"));
+      callback(new Error("Not allowed by CORS: " + origin));
     }
   },
   credentials: true,
 }));
+
 
 
 // Serve uploads folder statically
