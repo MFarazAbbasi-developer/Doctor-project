@@ -22,10 +22,13 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 // app.use(cors()); 
-app.use(cors({
-  origin: process.env.CLIENT_URL, // Next.js
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL, // allow only your frontend
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true, // if you use cookies/auth
+  })
+);
 
 // Serve uploads folder statically
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
