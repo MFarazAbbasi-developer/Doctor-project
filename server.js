@@ -24,7 +24,7 @@ app.use(cookieParser());
 // app.use(cors()); 
 const allowedOrigins = [
   "http://localhost:3000",
-  // "https://doctor-project-frontend-zfia-r2v6pb4lf.vercel.app"
+  "https://doctor-project-frontend-zfia-r2v6pb4lf.vercel.app"
 ];
 
 app.use(cors({
