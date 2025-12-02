@@ -84,12 +84,19 @@ export const register = async (req, res) => {
     });
 
     // ------- Set Cookie -------
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    // res.cookie("token", token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production",
+    //   sameSite: "lax",
+    //   maxAge: 7 * 24 * 60 * 60 * 1000,
+    // });
+res.cookie("token", token, {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+  path: "/",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+});
 
     res.status(201).json({
       success: true,
@@ -167,12 +174,20 @@ export const login = async (req, res) => {
     });
 
     // Set cookie
+    // res.cookie("token", token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production",
+    //   sameSite: "lax",
+    //   maxAge: 7 * 24 * 60 * 60 * 1000,
+    // });
     res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+  path: "/",            // Important
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+});
+
 
     // Response
     res.status(200).json({
@@ -194,12 +209,19 @@ export const login = async (req, res) => {
 export const logout = async (req, res) => {
   try {
     // Clear the cookie (if using httpOnly cookie for JWT)
-    res.cookie("token", "", {
-      httpOnly: true,
-      expires: new Date(0), // expire immediately
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-    });
+    // res.cookie("token", "", {
+    //   httpOnly: true,
+    //   expires: new Date(0), // expire immediately
+    //   sameSite: "strict",
+    //   secure: process.env.NODE_ENV === "production",
+    // });
+res.cookie("token", "", {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+  path: "/",            // VERY IMPORTANT
+  expires: new Date(0),
+});
 
     // Respond success
     res.status(200).json({
