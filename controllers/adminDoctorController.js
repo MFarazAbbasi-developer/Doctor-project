@@ -2,6 +2,7 @@ import Doctor from "../models/Doctor.js";
 import bcrypt from "bcryptjs";
 import fs from "fs";
 import path from "path";
+import cloudinary from "../config/cloudinary.js";
 
 export const getAllDoctors = async (req, res) => {
   try {
@@ -195,7 +196,6 @@ if (consultationFee?.amount) {
       if (nicExists)
         return res.status(400).json({ success: false, message: "NIC number already in use." });
     }
-
     // --- Update basic fields ---
     if (firstName) doctor.name.firstName = firstName;
     if (lastName) doctor.name.lastName = lastName;
@@ -216,22 +216,29 @@ if (consultationFee?.amount) {
 
     // --- Education & Certifications ---
     if (educationBackground) {
-      doctor.educationBackground = Array.isArray(educationBackground)
-        ? educationBackground
-        : JSON.parse(educationBackground);
-    }
-    if (certifications) {
-      doctor.certifications = Array.isArray(certifications)
-        ? certifications
-        : JSON.parse(certifications);
-    }
+  doctor.educationBackground = Array.isArray(educationBackground)
+    ? educationBackground
+    : typeof educationBackground === "string"
+    ? JSON.parse(educationBackground)
+    : educationBackground;
+}
 
-    // --- Availability ---
-    if (availability) {
-      doctor.availability = Array.isArray(availability.days)
-        ? { days: availability.days, timeSlots: availability.timeSlots || [] }
-        : JSON.parse(availability);
-    }
+if (certifications) {
+  doctor.certifications = Array.isArray(certifications)
+    ? certifications
+    : typeof certifications === "string"
+    ? JSON.parse(certifications)
+    : certifications;
+}
+
+if (availability) {
+  doctor.availability = Array.isArray(availability?.days)
+    ? { days: availability.days, timeSlots: availability.timeSlots || [] }
+    : typeof availability === "string"
+    ? JSON.parse(availability)
+    : availability;
+}
+
 
     // --- Clinic & Fee ---
     if (clinicAddress) {
@@ -301,6 +308,8 @@ export const getSingleDoctor = async (req, res) => {
 };
 
 
+
+
 export const addDoctorByAdmin = async (req, res) => {
   try {
     const {
@@ -328,30 +337,11 @@ export const addDoctorByAdmin = async (req, res) => {
       consultationFee,
       availability,
     } = req.body;
-    console.log("full file: ", req.body)
-console.log("firstName:", firstName);
-console.log("lastName:", lastName);
-console.log("email:", email);
-console.log("password:", password);
-console.log("phoneNumber:", phoneNumber);
-console.log("nicNumber:", nicNumber);
-console.log("gender:", gender);
-console.log("description:", description);
-console.log("specialization:", specialization);
-console.log("experienceYears:", experienceYears);
-console.log("languages:", languages);
-console.log("educationBackground:", educationBackground);
-console.log("certifications:", certifications);
-console.log("services:", services);
-console.log("tags:", tags);
-console.log("street:", street);
-console.log("city:", city);
-console.log("zipCode:", zipCode);
-console.log("province:", province);
-console.log("mapLink:", mapLink);
-console.log("consultationFee:", consultationFee);
-console.log("availability:", availability);
-    // --- VALIDATIONS ---
+
+    console.log("req.body:", req.body);
+    console.log("req.file:", req.file);
+
+    // --- REQUIRED FIELDS CHECK ---
     if (
       !firstName ||
       !lastName ||
@@ -361,59 +351,72 @@ console.log("availability:", availability);
       !nicNumber ||
       !gender ||
       !specialization ||
-      !experienceYears ||
+      experienceYears === undefined ||
       !services?.length ||
       !city ||
       !zipCode ||
       !mapLink ||
       !consultationFee?.amount
     ) {
-      return res.status(400).json({
-        success: false,
-        message: "Please fill all required fields.",
-      });
+      return res.status(400).json({ success: false, message: "Please fill all required fields." });
     }
 
-    // Check email already exists
-    const existingEmail = await Doctor.findOne({ email });
-    if (existingEmail) {
-      return res.status(400).json({
-        success: false,
-        message: "Email already exists.",
-      });
-    }
+    // --- UNIQUE CHECKS ---
+    if (await Doctor.findOne({ email }))
+      return res.status(400).json({ success: false, message: "Email already exists." });
+    if (await Doctor.findOne({ nicNumber }))
+      return res.status(400).json({ success: false, message: "NIC number already exists." });
 
-    // Check NIC already exists
-    const existingNic = await Doctor.findOne({ nicNumber });
-    if (existingNic) {
-      return res.status(400).json({
-        success: false,
-        message: "NIC number already exists.",
-      });
-    }
+    // --- NIC & PHONE VALIDATION ---
+    if (!/^[0-9]{5}-[0-9]{7}-[0-9]$/.test(nicNumber))
+      return res.status(400).json({ success: false, message: "NIC must be 12345-1234567-1." });
+    if (!/^03[0-9]{9}$/.test(phoneNumber))
+      return res.status(400).json({ success: false, message: "Phone number must be 11 digits, starting with 03." });
 
-    // Hash password
+    // --- EXPERIENCE VALIDATION ---
+    if (isNaN(experienceYears) || experienceYears < 0)
+      return res.status(400).json({ success: false, message: "Experience must be positive." });
+
+    // --- CONSULTATION FEE ---
+    let fee = { amount: 0, currency: "PKR" };
+    try {
+      fee = typeof consultationFee === "string" ? JSON.parse(consultationFee) : consultationFee;
+    } catch (e) {
+      return res.status(400).json({ success: false, message: "Invalid consultationFee JSON" });
+    }
+    if (!fee?.amount || isNaN(fee.amount) || fee.amount < 0)
+      return res.status(400).json({ success: false, message: "Consultation fee must be positive." });
+
+    // --- HASH PASSWORD ---
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Parse nested JSON fields if they come as strings
-    const eduBackground =
-      typeof educationBackground === "string"
-        ? JSON.parse(educationBackground)
-        : educationBackground || [];
-    const certs =
-      typeof certifications === "string"
-        ? JSON.parse(certifications)
-        : certifications || [];
-    const avail =
-      typeof availability === "string"
-        ? JSON.parse(availability)
-        : availability || { days: [], timeSlots: [] };
-    const fee =
-      typeof consultationFee === "string"
-        ? JSON.parse(consultationFee)
-        : consultationFee || { amount: 0, currency: "PKR" };
+    // --- PARSE OPTIONAL JSON FIELDS ---
+    let eduBackground = [];
+    let certs = [];
+    let avail = { days: [], timeSlots: [] };
 
-    // Create doctor
+    try {
+      eduBackground =
+        typeof educationBackground === "string" ? JSON.parse(educationBackground) : educationBackground || [];
+    } catch (e) {
+      return res.status(400).json({ success: false, message: "Invalid educationBackground JSON" });
+    }
+
+    try {
+      certs =
+        typeof certifications === "string" ? JSON.parse(certifications) : certifications || [];
+    } catch (e) {
+      return res.status(400).json({ success: false, message: "Invalid certifications JSON" });
+    }
+
+    try {
+      avail =
+        typeof availability === "string" ? JSON.parse(availability) : availability || { days: [], timeSlots: [] };
+    } catch (e) {
+      return res.status(400).json({ success: false, message: "Invalid availability JSON" });
+    }
+
+    // --- CREATE DOCTOR ---
     const doctor = await Doctor.create({
       name: { firstName, lastName },
       email,
@@ -421,19 +424,17 @@ console.log("availability:", availability);
       phoneNumber,
       nicNumber,
       gender,
-      profileImage: req.file ? `/uploads/doctors/${req.file.filename}` : null,
-
-
-      description,
-      bio,
+      profileImage: req.file?.path || null, // Cloudinary URL
+      profileImagePublicId: req.file?.filename || null,
+      description: description || "",
+      bio: bio || "",
       specialization,
       experienceYears,
-      languages: Array.isArray(languages) ? languages : [languages],
+      languages: Array.isArray(languages) ? languages : languages ? [languages] : [],
       educationBackground: eduBackground,
       certifications: certs,
       services: Array.isArray(services) ? services : [services],
-      tags: Array.isArray(tags) ? tags : [tags],
-
+      tags: Array.isArray(tags) ? tags : tags ? [tags] : [],
       clinicAddress: {
         street: street || "",
         city,
@@ -442,19 +443,16 @@ console.log("availability:", availability);
         country: "Pakistan",
         mapLink: mapLink || "",
       },
-
       consultationFee: {
         amount: fee.amount,
         currency: fee.currency || "PKR",
       },
-
       availability: {
         days: avail.days || [],
         timeSlots: avail.timeSlots || [],
       },
-
       isBlocked: false,
-      isAccountVerified: true, // Admin-created doctor can be auto-verified
+      isAccountVerified: true,
     });
 
     return res.status(201).json({
@@ -470,3 +468,5 @@ console.log("availability:", availability);
     });
   }
 };
+
+

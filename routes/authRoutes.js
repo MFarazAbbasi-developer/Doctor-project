@@ -10,6 +10,8 @@ import {
   verifyOtp,
 } from "../controllers/authController.js";
 import { protectAdmin, protectUser } from "../middlewares/authMiddleware.js";
+import { addDoctorByAdmin } from "../controllers/adminDoctorController.js";
+import { upload } from "../middlewares/multerConfig.js";
 
 const authRouter = express.Router();
 
@@ -28,6 +30,18 @@ authRouter.post("/update-password", updatePassword);
 
 authRouter.get("/me", protectUser, getCurrentUser);
 authRouter.get("/admin/me", protectAdmin, getCurrentUser);
+
+
+// Doctor Registration
+authRouter.post(
+  "/doctors/add",
+  (req, res, next) => {
+    req.uploadPath = "doctors";
+    next();
+  },
+  upload.single("profileImage"),
+  addDoctorByAdmin
+);
 
 // -------------------------
 // Google OAuth Routes
