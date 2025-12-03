@@ -19,7 +19,7 @@ const doctorSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      minlength: 8,
+      // minlength: 8,
       select: false,
     },
 
@@ -30,15 +30,17 @@ const doctorSchema = new mongoose.Schema(
     },
     nicNumber: {
       type: String,
-      required: true,
+      // required: true,
       unique: true,
-      match: /^[0-9]{5}-[0-9]{7}-[0-9]$/,
+      sparse: true, // <- allows multiple documents with null/undefined
+      // match: /^[0-9]{5}-[0-9]{7}-[0-9]$/,
+      
     },
 
     gender: {
       type: String,
       enum: ["male", "female", "other"],
-      required: true,
+      // required: true,
     },
 
     profileImage: { type: String, default: null },
@@ -50,20 +52,24 @@ const doctorSchema = new mongoose.Schema(
     description: { type: String, default: "" },
     bio: { type: String, maxlength: 160, default: "" }, // ~1-2 sentences
     specialization: { type: String, required: true, trim: true },
-    experienceYears: { type: Number, required: true },
+    // experienceYears: { type: Number, required: true },
     languages: { type: [String], default: [] },
     educationBackground: [
       { degree: String, institution: String, year: Number },
     ],
     certifications: [{ title: String, organization: String, year: Number }],
-    services: { type: [String], required: true, default: [] },
+    // services: { type: [String], required: true, default: [] },
     tags: { type: [String], default: [] },
 
     // Clinic Info
     clinicAddress: {
       street: { type: String, default: "" },
-      city: { type: String, required: true },
-      zipCode: { type: String, required: true },
+      city: { type: String, 
+        // required: true
+       },
+      zipCode: { type: String, 
+        // required: true 
+      },
       province: { type: String, default: "" },
       country: { type: String, default: "Pakistan" },
       mapLink: { type: String, default: "" } 
@@ -83,7 +89,9 @@ const doctorSchema = new mongoose.Schema(
     ],
 
     consultationFee: {
-      amount: { type: Number, required: true },
+      amount: { type: Number,
+        //  required: true
+         },
       currency: { type: String, default: "PKR" },
     },
 

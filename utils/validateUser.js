@@ -25,9 +25,9 @@ export const validateUserSignup = (data) => {
     errors.push("Invalid NIC number");
   }
 
-  if (!data.gender || !["male", "female", "other"].includes(data.gender)) {
-    errors.push("Invalid gender");
-  }
+  // if (!data.gender || !["male", "female", "other"].includes(data.gender)) {
+  //   errors.push("Invalid gender");
+  // }
 
   return errors;
 };

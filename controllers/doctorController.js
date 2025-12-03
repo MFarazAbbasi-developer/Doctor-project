@@ -1,7 +1,88 @@
 import Doctor from "../models/Doctor.js";
+import bcrypt from 'bcryptjs'
 
 export const doctorRegister = async (req, res) => {
-  res.status(200).json({ message: "Doctor Register Controller is working!!!" });
+  try {
+    const {
+      name,
+      email,
+      password,
+      phoneNumber,
+      gender,
+      specialization,
+      clinicAddress,
+      consultationFee,
+    } = req.body;
+
+    // --- REQUIRED FIELDS CHECK ---
+    if (
+      !name?.firstName ||
+      !name?.lastName ||
+      !email ||
+      !password ||
+      !phoneNumber ||
+      !gender ||
+      !specialization ||
+      !clinicAddress?.city ||
+      !consultationFee?.amount
+    ) {
+      return res.status(400).json({ success: false, message: "Please fill all required fields." });
+    }
+
+    // --- UNIQUE CHECKS ---
+    if (await Doctor.findOne({ email }))
+      return res.status(400).json({ success: false, message: "Email already exists." });
+
+    // // --- NIC & PHONE VALIDATION ---
+    if (!/^03[0-9]{9}$/.test(phoneNumber))
+      return res.status(400).json({ success: false, message: "Phone number must be 11 digits, starting with 03." });
+
+
+console.log("Hale pyo anja taen ta: ", req.body)
+
+    // --- HASH PASSWORD ---
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    
+
+    
+
+    // --- CREATE DOCTOR ---
+    const doctor = await Doctor.create({
+      name,
+      email,
+      password: hashedPassword,
+      phoneNumber,
+      gender,
+      specialization,
+      clinicAddress: {
+        street: "",
+        city: clinicAddress.city,
+        zipCode: "",
+        province: "",
+        country: "Pakistan",
+        mapLink: "",
+      },
+      consultationFee: {
+        amount: consultationFee.amount,
+        currency: consultationFee.currency || "PKR",
+      },
+      isBlocked: false,
+      isAccountVerified: false,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Doctor added successfully.",
+      doctor,
+    });
+  } catch (error) {
+    console.error("Add doctor error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while adding doctor.",
+    });
+  }
 };
 
 export const doctorLogin = async (req, res) => {

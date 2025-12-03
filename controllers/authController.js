@@ -14,7 +14,7 @@ export const register = async (req, res) => {
       password,
       phoneNumber,
       nicNumber,
-      gender,
+      // gender,
     } = req.body;
 
     // ------- Validation -------
@@ -25,7 +25,7 @@ export const register = async (req, res) => {
       password,
       phoneNumber,
       nicNumber,
-      gender,
+      // gender,
     });
 
     if (errors.length > 0) {
@@ -71,7 +71,7 @@ export const register = async (req, res) => {
       password: hashedPassword,
       phoneNumber,
       nicNumber,
-      gender,
+      // gender,
       authProvider: "manual",
       isAccountVerified: false,
       verifyOtp: otp,
