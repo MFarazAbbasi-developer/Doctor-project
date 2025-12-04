@@ -472,6 +472,7 @@ export const addDoctorByAdmin = async (req, res) => {
 
 export const TEMPaddDoctorByAdmin = async (req, res) => {
   try {
+    console.log("Body is as follows: ",req.body)
     const {
       firstName,
       lastName,
@@ -504,10 +505,10 @@ export const TEMPaddDoctorByAdmin = async (req, res) => {
     }
 
     // --- UNIQUE CHECKS ---
-    if (await Doctor.findOne({ email }))
+    if (email && await Doctor.findOne({ email }))
       return res.status(400).json({ success: false, message: "Email already exists." });
 
-    if (!/^03[0-9]{9}$/.test(phoneNumber))
+    if ( phoneNumber && !/^03[0-9]{9}$/.test(phoneNumber))
       return res.status(400).json({ success: false, message: "Phone number must be 11 digits, starting with 03." });
 
     // --- EXPERIENCE VALIDATION ---
@@ -546,33 +547,38 @@ export const TEMPaddDoctorByAdmin = async (req, res) => {
     }
 
     // --- CREATE DOCTOR ---
-    const doctor = await Doctor.create({
-      name: { firstName, lastName },
-      email,
-      phoneNumber,
-      gender,
-      specialization,
-      experienceYears,
-      educationBackground: eduBackground,
-      clinicAddress: {
-        street: street || "",
-        city:"Nawabshah",
-        zipCode: "67450",
-        province: "Sindh",
-        country: "Pakistan",
-        mapLink: "",
-      },
-      consultationFee: {
-        amount: fee.amount,
-        currency: fee.currency || "PKR",
-      },
-      availability: {
-        days: avail.days || [],
-        timeSlots: avail.timeSlots || [],
-      },
-      isBlocked: false,
-      isAccountVerified: false,
-    });
+    let doctorData = {
+  name: { firstName, lastName },
+  email,
+  phoneNumber,
+  gender,
+  specialization,
+  experienceYears,
+  educationBackground: eduBackground,
+  clinicAddress: {
+    street,
+    city: "Nawabshah",
+    zipCode: "67450",
+    province: "Sindh",
+    country: "Pakistan",
+  },
+  consultationFee: {
+    amount: fee.amount,
+    currency: fee.currency || "PKR",
+  },
+  availability: {
+    days: avail.days,
+    timeSlots: avail.timeSlots,
+  },
+  isBlocked: false,
+  isAccountVerified: false,
+};
+
+// 💥 Clean empty fields
+doctorData = removeEmpty(doctorData);
+console.log("UPdated Data: ", doctorData)
+const doctor = await Doctor.create(doctorData);
+
 
     return res.status(201).json({
       success: true,
@@ -587,3 +593,29 @@ export const TEMPaddDoctorByAdmin = async (req, res) => {
     });
   }
 };
+
+
+
+
+function removeEmpty(obj) {
+  if (Array.isArray(obj)) {
+    return obj
+      .map(removeEmpty)
+      .filter(v => v && Object.keys(v).length > 0);
+  }
+
+  if (obj && typeof obj === "object") {
+    const clean = {};
+    for (const key in obj) {
+      const val = removeEmpty(obj[key]);
+
+      if (val === "" || val === null) continue;
+      if (Array.isArray(val) && val.length === 0) continue;
+      if (typeof val === "object" && Object.keys(val).length === 0) continue;
+
+      clean[key] = val;
+    }
+    return clean;
+  }
+  return obj;
+}
