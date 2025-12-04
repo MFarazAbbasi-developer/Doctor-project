@@ -10,22 +10,23 @@ const doctorSchema = new mongoose.Schema(
 
     email: {
       type: String,
-      required: true,
+      // required: true,
       unique: true,
       lowercase: true,
       trim: true,
+      sparse: true, // <- allows multiple documents with null/undefined
     },
 
     password: {
       type: String,
-      required: true,
+      // required: true,
       // minlength: 8,
       select: false,
     },
 
     phoneNumber: {
       type: String,
-      required: true,
+      // required: true,
       match: /^(\+92|0)?3[0-9]{9}$/,
     },
     nicNumber: {
@@ -52,13 +53,17 @@ const doctorSchema = new mongoose.Schema(
     description: { type: String, default: "" },
     bio: { type: String, maxlength: 160, default: "" }, // ~1-2 sentences
     specialization: { type: String, required: true, trim: true },
-    // experienceYears: { type: Number, required: true },
+    experienceYears: { type: Number, 
+      // required: true 
+    },
     languages: { type: [String], default: [] },
     educationBackground: [
       { degree: String, institution: String, year: Number },
     ],
     certifications: [{ title: String, organization: String, year: Number }],
-    // services: { type: [String], required: true, default: [] },
+    services: { type: [String],
+      //  required: true,
+       default: [] },
     tags: { type: [String], default: [] },
 
     // Clinic Info
@@ -66,11 +71,13 @@ const doctorSchema = new mongoose.Schema(
       street: { type: String, default: "" },
       city: { type: String, 
         // required: true
+        default: "Nawabshah"
        },
       zipCode: { type: String, 
         // required: true 
+        default: "67450"
       },
-      province: { type: String, default: "" },
+      province: { type: String, default: "Sindh" },
       country: { type: String, default: "Pakistan" },
       mapLink: { type: String, default: "" } 
     },

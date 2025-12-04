@@ -9,7 +9,7 @@ import {
   updateUserByAdmin,
 } from "../controllers/adminController.js";
 import { upload } from "../middlewares/multerConfig.js";
-import { getAllDoctors, toggleBlockDoctor, updateDoctorByAdmin, getSingleDoctor, addDoctorByAdmin } from "../controllers/adminDoctorController.js";
+import { getAllDoctors, toggleBlockDoctor, updateDoctorByAdmin, getSingleDoctor, addDoctorByAdmin, TEMPaddDoctorByAdmin } from "../controllers/adminDoctorController.js";
 
 const adminRouter = express.Router();
 
@@ -63,13 +63,13 @@ adminRouter.put(
 
 adminRouter.post(
   "/doctors/add",
-  protectAdmin,
-  (req, res, next) => {
-    req.uploadPath = "doctors";
-    next();
-  },
-  upload.single("profileImage"),
-  addDoctorByAdmin
+  // protectAdmin,
+  // (req, res, next) => {
+  //   req.uploadPath = "doctors";
+  //   next();
+  // },
+  // upload.single("profileImage"),
+  TEMPaddDoctorByAdmin
 );
 
 export default adminRouter;

@@ -470,3 +470,120 @@ export const addDoctorByAdmin = async (req, res) => {
 };
 
 
+export const TEMPaddDoctorByAdmin = async (req, res) => {
+  try {
+    const {
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      gender,
+      specialization,
+      experienceYears,
+      educationBackground,
+      street,
+      consultationFee,
+      availability,
+    } = req.body;
+
+    console.log("req.body:", req.body);
+
+
+    // --- REQUIRED FIELDS CHECK ---
+    if (
+      !firstName ||
+      !lastName ||
+      // !email ||
+      // !phoneNumber ||
+      !gender ||
+      !specialization ||
+      // experienceYears === undefined ||
+      !consultationFee?.amount
+    ) {
+      return res.status(400).json({ success: false, message: "Please fill all required fields." });
+    }
+
+    // --- UNIQUE CHECKS ---
+    if (await Doctor.findOne({ email }))
+      return res.status(400).json({ success: false, message: "Email already exists." });
+
+    if (!/^03[0-9]{9}$/.test(phoneNumber))
+      return res.status(400).json({ success: false, message: "Phone number must be 11 digits, starting with 03." });
+
+    // --- EXPERIENCE VALIDATION ---
+    if (experienceYears && experienceYears < 0)
+      return res.status(400).json({ success: false, message: "Experience must be positive." });
+
+    // --- CONSULTATION FEE ---
+    let fee = { amount: 0, currency: "PKR" };
+    try {
+      fee = typeof consultationFee === "string" ? JSON.parse(consultationFee) : consultationFee;
+    } catch (e) {
+      return res.status(400).json({ success: false, message: "Invalid consultationFee JSON" });
+    }
+    if (!fee?.amount || isNaN(fee.amount) || fee.amount < 0)
+      return res.status(400).json({ success: false, message: "Consultation fee must be positive." });
+
+
+
+    // --- PARSE OPTIONAL JSON FIELDS ---
+    let eduBackground = [];
+    let avail = { days: [], timeSlots: [] };
+
+    try {
+      eduBackground =
+        typeof educationBackground === "string" ? JSON.parse(educationBackground) : educationBackground || [];
+    } catch (e) {
+      return res.status(400).json({ success: false, message: "Invalid educationBackground JSON" });
+    }
+
+
+    try {
+      avail =
+        typeof availability === "string" ? JSON.parse(availability) : availability || { days: [], timeSlots: [] };
+    } catch (e) {
+      return res.status(400).json({ success: false, message: "Invalid availability JSON" });
+    }
+
+    // --- CREATE DOCTOR ---
+    const doctor = await Doctor.create({
+      name: { firstName, lastName },
+      email,
+      phoneNumber,
+      gender,
+      specialization,
+      experienceYears,
+      educationBackground: eduBackground,
+      clinicAddress: {
+        street: street || "",
+        city:"Nawabshah",
+        zipCode: "67450",
+        province: "Sindh",
+        country: "Pakistan",
+        mapLink: "",
+      },
+      consultationFee: {
+        amount: fee.amount,
+        currency: fee.currency || "PKR",
+      },
+      availability: {
+        days: avail.days || [],
+        timeSlots: avail.timeSlots || [],
+      },
+      isBlocked: false,
+      isAccountVerified: false,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Doctor added successfully.",
+      doctor,
+    });
+  } catch (error) {
+    console.error("Add doctor error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while adding doctor.",
+    });
+  }
+};
