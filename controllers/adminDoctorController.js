@@ -472,7 +472,6 @@ export const addDoctorByAdmin = async (req, res) => {
 
 export const TEMPaddDoctorByAdmin = async (req, res) => {
   try {
-    console.log("Body is as follows: ",req.body)
     const {
       firstName,
       lastName,
@@ -487,7 +486,6 @@ export const TEMPaddDoctorByAdmin = async (req, res) => {
       availability,
     } = req.body;
 
-    console.log("req.body:", req.body);
 
 
     // --- REQUIRED FIELDS CHECK ---
@@ -576,7 +574,6 @@ export const TEMPaddDoctorByAdmin = async (req, res) => {
 
 // 💥 Clean empty fields
 doctorData = removeEmpty(doctorData);
-console.log("UPdated Data: ", doctorData)
 const doctor = await Doctor.create(doctorData);
 
 
